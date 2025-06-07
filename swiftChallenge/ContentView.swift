@@ -11,6 +11,7 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
+    @State private var showCamera = false
 
     var body: some View {
         NavigationSplitView {
@@ -28,6 +29,13 @@ struct ContentView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     EditButton()
                 }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        showCamera = true
+                    }) {
+                        Image(systemName: "camera")
+                    }
+                }
                 ToolbarItem {
                     Button(action: addItem) {
                         Label("Add Item", systemImage: "plus")
@@ -36,6 +44,9 @@ struct ContentView: View {
             }
         } detail: {
             Text("Select an item")
+        }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraView()
         }
     }
 
@@ -53,9 +64,4 @@ struct ContentView: View {
             }
         }
     }
-}
-
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }
