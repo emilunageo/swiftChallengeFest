@@ -426,7 +426,25 @@ struct SuggestionsView: View {
             }
             
             if vm.comidasSugeridas.isEmpty && !vm.isLoading {
-                EmptyStateView()
+                VStack(spacing: 16) {
+                    Image(systemName: "fork.knife.circle")
+                        .font(.system(size: 40))
+                        .foregroundColor(.appleGreen)
+                    
+                    VStack(spacing: 8) {
+                        Text("Try these ingredients:")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        
+                        Text("chicken, lettuce, tomato, spinach, yogurt, berries, salmon, quinoa")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                }
+                .padding(.vertical, 20)
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(vm.comidasSugeridas) { comida in
@@ -468,11 +486,23 @@ struct SuggestionsView: View {
     
     private func estimarIG(para nombre: String) -> Int {
         let mapping: [String: Int] = [
+            // Vegetables
             "lettuce": 10, "spinach": 15, "cucumber": 15, "tomato": 30,
-            "apple": 40, "white bread": 75, "white rice": 70,
-            "pasta": 55, "walnuts": 25, "chicken": 0, "salmon": 0,
-            "yogurt": 35, "broccoli": 25, "avocado": 15,
-            "quinoa": 53, "protein": 0, "berries": 25
+            "broccoli": 25, "avocado": 15,
+            
+            // Proteins
+            "chicken": 0, "salmon": 0, "tuna": 0, "eggs": 0, "protein": 0,
+            "cheese": 0,
+            
+            // Fruits
+            "apple": 40, "berries": 25,
+            
+            // Grains & Carbs
+            "quinoa": 53, "white bread": 75, "whole bread": 45, "white rice": 70,
+            "pasta": 55,
+            
+            // Dairy & Nuts
+            "yogurt": 35, "walnuts": 25
         ]
         let clave = nombre.lowercased()
         return mapping[clave, default: 50]

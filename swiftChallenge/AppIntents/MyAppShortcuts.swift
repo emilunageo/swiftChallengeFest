@@ -22,7 +22,7 @@
 //                shortTitle: "Glucose Analysis",
 //                systemImageName: "drop.fill"
 //            );
-//            
+//
 //            AppShortcut(
 //                intent: BloodPressureAdviceIntent(),
 //                phrases: [
@@ -36,7 +36,7 @@
 //                shortTitle: "Blood Pressure",
 //                systemImageName: "heart.circle"
 //            );
-//            
+//
 //            AppShortcut(
 //                intent: PersonalizedMealAdviceIntent(),
 //                phrases: [
@@ -50,7 +50,7 @@
 //                shortTitle: "Meal Planning",
 //                systemImageName: "fork.knife.circle"
 //            );
-//            
+//
 //            AppShortcut(
 //                intent: ActivityRecommendationIntent(),
 //                phrases: [
@@ -64,7 +64,7 @@
 //                shortTitle: "Exercise Plan",
 //                systemImageName: "figure.run"
 //            );
-//            
+//
 //            AppShortcut(
 //                intent: BMIAnalysisIntent(),
 //                phrases: [
@@ -78,7 +78,7 @@
 //                shortTitle: "BMI Analysis",
 //                systemImageName: "scalemass.fill"
 //            );
-//            
+//
 //            AppShortcut(
 //                intent: ComprehensiveHealthCheckIntent(),
 //                phrases: [
@@ -92,7 +92,7 @@
 //                shortTitle: "Health Overview",
 //                systemImageName: "medical.thermometer"
 //            );
-//            
+//
 //            AppShortcut(
 //                intent: EmergencyHealthCheckIntent(),
 //                phrases: [
