@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C93F61842DF56AC500449FCF /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C93F61832DF56AC500449FCF /* WidgetKit.framework */; };
+		C93F61862DF56AC500449FCF /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C93F61852DF56AC500449FCF /* SwiftUI.framework */; };
+		C93F61972DF56AC600449FCF /* WidgetGlucoseExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C93F61812DF56AC500449FCF /* WidgetGlucoseExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A5D156222DF4C3F900B532FF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,12 +27,36 @@
 			remoteGlobalIDString = A5D156112DF4C3F600B532FF;
 			remoteInfo = swiftChallenge;
 		};
+		C93F61952DF56AC600449FCF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A5D1560A2DF4C3F600B532FF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C93F61802DF56AC500449FCF;
+			remoteInfo = WidgetGlucoseExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C93F619C2DF56AC600449FCF /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C93F61972DF56AC600449FCF /* WidgetGlucoseExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A5D156122DF4C3F600B532FF /* swiftChallenge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = swiftChallenge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A5D156212DF4C3F900B532FF /* swiftChallengeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = swiftChallengeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A5D1562B2DF4C3F900B532FF /* swiftChallengeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = swiftChallengeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C93F61812DF56AC500449FCF /* WidgetGlucoseExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetGlucoseExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C93F61832DF56AC500449FCF /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		C93F61852DF56AC500449FCF /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -37,6 +67,32 @@
 			);
 			target = A5D156112DF4C3F600B532FF /* swiftChallenge */;
 		};
+		C93F619B2DF56AC600449FCF /* Exceptions for "WidgetGlucose" folder in "WidgetGlucoseExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C93F61802DF56AC500449FCF /* WidgetGlucoseExtension */;
+		};
+		C93F619E2DF56F4500449FCF /* Exceptions for "swiftChallenge" folder in "WidgetGlucoseExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Animation.swift,
+				AppIntents/HealthIntents.swift,
+				ForumView.swift,
+				MealView.swift,
+				MealViews/CamaraView.swift,
+				MealViews/EntryMethodSelectView.swift,
+				MealViews/EntryOptionCardView.swift,
+				MealViews/FoodPhotoEntryView.swift,
+				MealViews/ManualEntryView.swift,
+				MealViews/MealModel.swift,
+				MealViews/TextPhotoEntryView.swift,
+				ProfileView.swift,
+				SeeFood.mlmodel,
+			);
+			target = C93F61802DF56AC500449FCF /* WidgetGlucoseExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -44,6 +100,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				C93F612B2DF5515400449FCF /* Exceptions for "swiftChallenge" folder in "swiftChallenge" target */,
+				C93F619E2DF56F4500449FCF /* Exceptions for "swiftChallenge" folder in "WidgetGlucoseExtension" target */,
 			);
 			path = swiftChallenge;
 			sourceTree = "<group>";
@@ -56,6 +113,14 @@
 		A5D1562E2DF4C3F900B532FF /* swiftChallengeUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = swiftChallengeUITests;
+			sourceTree = "<group>";
+		};
+		C93F61872DF56AC500449FCF /* WidgetGlucose */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C93F619B2DF56AC600449FCF /* Exceptions for "WidgetGlucose" folder in "WidgetGlucoseExtension" target */,
+			);
+			path = WidgetGlucose;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -82,6 +147,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C93F617E2DF56AC500449FCF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C93F61862DF56AC500449FCF /* SwiftUI.framework in Frameworks */,
+				C93F61842DF56AC500449FCF /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -91,6 +165,8 @@
 				A5D156142DF4C3F600B532FF /* swiftChallenge */,
 				A5D156242DF4C3F900B532FF /* swiftChallengeTests */,
 				A5D1562E2DF4C3F900B532FF /* swiftChallengeUITests */,
+				C93F61872DF56AC500449FCF /* WidgetGlucose */,
+				C93F61822DF56AC500449FCF /* Frameworks */,
 				A5D156132DF4C3F600B532FF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -101,8 +177,18 @@
 				A5D156122DF4C3F600B532FF /* swiftChallenge.app */,
 				A5D156212DF4C3F900B532FF /* swiftChallengeTests.xctest */,
 				A5D1562B2DF4C3F900B532FF /* swiftChallengeUITests.xctest */,
+				C93F61812DF56AC500449FCF /* WidgetGlucoseExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C93F61822DF56AC500449FCF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C93F61832DF56AC500449FCF /* WidgetKit.framework */,
+				C93F61852DF56AC500449FCF /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -115,10 +201,12 @@
 				A5D1560E2DF4C3F600B532FF /* Sources */,
 				A5D1560F2DF4C3F600B532FF /* Frameworks */,
 				A5D156102DF4C3F600B532FF /* Resources */,
+				C93F619C2DF56AC600449FCF /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C93F61962DF56AC600449FCF /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A5D156142DF4C3F600B532FF /* swiftChallenge */,
@@ -176,6 +264,28 @@
 			productReference = A5D1562B2DF4C3F900B532FF /* swiftChallengeUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		C93F61802DF56AC500449FCF /* WidgetGlucoseExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C93F61982DF56AC600449FCF /* Build configuration list for PBXNativeTarget "WidgetGlucoseExtension" */;
+			buildPhases = (
+				C93F617D2DF56AC500449FCF /* Sources */,
+				C93F617E2DF56AC500449FCF /* Frameworks */,
+				C93F617F2DF56AC500449FCF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C93F61872DF56AC500449FCF /* WidgetGlucose */,
+			);
+			name = WidgetGlucoseExtension;
+			packageProductDependencies = (
+			);
+			productName = WidgetGlucoseExtension;
+			productReference = C93F61812DF56AC500449FCF /* WidgetGlucoseExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -185,6 +295,7 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
+				ORGANIZATIONNAME = vic.swiftChallenge;
 				TargetAttributes = {
 					A5D156112DF4C3F600B532FF = {
 						CreatedOnToolsVersion = 16.4;
@@ -196,6 +307,9 @@
 					A5D1562A2DF4C3F900B532FF = {
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = A5D156112DF4C3F600B532FF;
+					};
+					C93F61802DF56AC500449FCF = {
+						CreatedOnToolsVersion = 16.4;
 					};
 				};
 			};
@@ -216,6 +330,7 @@
 				A5D156112DF4C3F600B532FF /* swiftChallenge */,
 				A5D156202DF4C3F900B532FF /* swiftChallengeTests */,
 				A5D1562A2DF4C3F900B532FF /* swiftChallengeUITests */,
+				C93F61802DF56AC500449FCF /* WidgetGlucoseExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -236,6 +351,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A5D156292DF4C3F900B532FF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C93F617F2DF56AC500449FCF /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -266,6 +388,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C93F617D2DF56AC500449FCF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -278,6 +407,11 @@
 			isa = PBXTargetDependency;
 			target = A5D156112DF4C3F600B532FF /* swiftChallenge */;
 			targetProxy = A5D1562C2DF4C3F900B532FF /* PBXContainerItemProxy */;
+		};
+		C93F61962DF56AC600449FCF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C93F61802DF56AC500449FCF /* WidgetGlucoseExtension */;
+			targetProxy = C93F61952DF56AC600449FCF /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -483,11 +617,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = HPATX5V93Z;
+				DEVELOPMENT_TEAM = CVCBDZA88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.emilunageo.swiftChallengeTests;
+				PRODUCT_BUNDLE_IDENTIFIER = vic.swiftChallengeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -502,11 +636,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = HPATX5V93Z;
+				DEVELOPMENT_TEAM = CVCBDZA88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.emilunageo.swiftChallengeTests;
+				PRODUCT_BUNDLE_IDENTIFIER = vic.swiftChallengeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -520,10 +654,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = HPATX5V93Z;
+				DEVELOPMENT_TEAM = CVCBDZA88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.emilunageo.swiftChallengeUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = vic.swiftChallengeUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -537,15 +671,69 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = HPATX5V93Z;
+				DEVELOPMENT_TEAM = CVCBDZA88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.emilunageo.swiftChallengeUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = vic.swiftChallengeUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = swiftChallenge;
+			};
+			name = Release;
+		};
+		C93F61992DF56AC600449FCF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CVCBDZA88R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WidgetGlucose/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WidgetGlucose;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vic.swiftChallenge.WidgetGlucose;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C93F619A2DF56AC600449FCF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CVCBDZA88R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WidgetGlucose/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WidgetGlucose;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vic.swiftChallenge.WidgetGlucose;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -584,6 +772,15 @@
 			buildConfigurations = (
 				A5D1563C2DF4C3F900B532FF /* Debug */,
 				A5D1563D2DF4C3F900B532FF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C93F61982DF56AC600449FCF /* Build configuration list for PBXNativeTarget "WidgetGlucoseExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C93F61992DF56AC600449FCF /* Debug */,
+				C93F619A2DF56AC600449FCF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
