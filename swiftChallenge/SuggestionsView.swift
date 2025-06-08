@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-struct RefriView: View {
+struct SuggestionsView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        Text("Suggestions")
     }
 }
 
 #Preview {
-    RefriView()
+    SuggestionsView()
 }
