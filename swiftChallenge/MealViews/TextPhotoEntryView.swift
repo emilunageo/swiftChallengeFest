@@ -10,8 +10,9 @@ import Vision
 import UIKit
 import AVFoundation
 import CoreML
+import HealthKit
 
-// MARK: - Text Photo Entry View (OCR)
+// MARK: - Text Photo Entry View (OCR) - Enhanced
 struct TextPhotoEntryView: View {
     @State private var foodEntry = FoodEntry()
     @State private var showingImagePicker = false
@@ -21,6 +22,8 @@ struct TextPhotoEntryView: View {
     @State private var isProcessing = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @State private var showingRecommendations = false
+    @StateObject private var healthKitManager = HealthKitManager()
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -43,6 +46,11 @@ struct TextPhotoEntryView: View {
                     // Food Items Card
                     foodItemsCard
                     
+                    // Glucose Estimation (only show when there are food items)
+                    if !foodEntry.items.allSatisfy { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } {
+                        glucoseEstimationCard
+                    }
+                    
                     // Save Button
                     saveButton
                     
@@ -60,10 +68,26 @@ struct TextPhotoEntryView: View {
         .sheet(isPresented: $showingCamera) {
             ImagePicker(selectedImage: $selectedImage, sourceType: .camera)
         }
+        .sheet(isPresented: $showingRecommendations) {
+            RecommendationsBottomSheet(
+                recommendations: MealRecommendations.generateRecommendations(
+                    for: foodEntry.items.compactMap { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0.name }
+                ),
+                mealType: foodEntry.mealType.rawValue,
+                foodItems: foodEntry.items.compactMap { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0.name },
+                isPresented: $showingRecommendations
+            ) {
+                showingRecommendations = false
+                dismiss()
+            }
+        }
         .alert("", isPresented: $showingAlert) {
             Button("OK") {
                 if alertMessage.contains("successfully") {
-                    dismiss()
+                    // Don't dismiss here if we have recommendations to show
+                    if !alertMessage.contains("✅") {
+                        dismiss()
+                    }
                 }
             }
         } message: {
@@ -74,9 +98,11 @@ struct TextPhotoEntryView: View {
                 processImage(image)
             }
         }
+        .onAppear {
+            healthKitManager.requestHealthKitPermissions()
+        }
     }
     
-    // Same implementation as the original OCR view
     private var imageCaptureCard: some View {
         VStack(spacing: 20) {
             if let selectedImage = selectedImage {
@@ -195,9 +221,6 @@ struct TextPhotoEntryView: View {
         }
     }
     
-    // Include similar implementations for meal type card, food items card, and save button
-    // (Same as previous implementations)
-    
     private var mealTypeCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -296,6 +319,10 @@ struct TextPhotoEntryView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.lightGray.opacity(0.5))
                         )
+                        .onSubmit {
+                            // Dismiss keyboard when user taps return
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        }
                         
                         if foodEntry.items.count > 1 {
                             Button(action: { removeFoodItem(at: index) }) {
@@ -307,6 +334,148 @@ struct TextPhotoEntryView: View {
                     }
                 }
             }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.cardBackground)
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+        )
+    }
+    
+    private var glucoseEstimationCard: some View {
+        let foodNames = foodEntry.items.compactMap {
+            $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0.name
+        }
+        let baselineGlucose = healthKitManager.recentGlucoseReading ?? 100.0
+        let estimation = GlucoseEstimation.estimate(for: foodNames, baselineGlucose: baselineGlucose)
+        
+        return VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Image(systemName: "waveform.path.ecg")
+                    .foregroundColor(.red)
+                    .font(.title2)
+                
+                Text("Glucose Impact")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                // HealthKit indicator
+                if let recentReading = healthKitManager.recentGlucoseReading {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("Current")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text("\(Int(recentReading)) mg/dL")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+            
+            // Risk Level Indicator
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(estimation.riskLevel.color.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: estimation.riskLevel.icon)
+                        .foregroundColor(estimation.riskLevel.color)
+                        .font(.title3)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(estimation.riskLevel.title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(estimation.riskLevel.color)
+                    
+                    Text("Estimated peak: \(Int(estimation.estimatedPeak)) mg/dL")
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                    
+                    Text("Time to peak: \(estimation.timeToPeak)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(estimation.riskLevel.color.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(estimation.riskLevel.color.opacity(0.3), lineWidth: 1)
+                    )
+            )
+            
+            // Detailed Information
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Expected increase:")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("+\(Int(estimation.estimatedIncrease)) mg/dL")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+                
+                if let avgGlucose = healthKitManager.averageGlucose {
+                    HStack {
+                        Text("Recent average:")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("\(Int(avgGlucose)) mg/dL")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+            
+            // Recommendations
+            if !estimation.recommendations.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Recommendations:")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    ForEach(Array(estimation.recommendations.enumerated()), id: \.offset) { index, recommendation in
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.appleGreen)
+                                .font(.system(size: 12))
+                                .padding(.top, 2)
+                            
+                            Text(recommendation)
+                                .font(.system(size: 13))
+                                .foregroundColor(.primary)
+                                .multilineTextAlignment(.leading)
+                        }
+                    }
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.appleGreen.opacity(0.1))
+                )
+            }
+            
+            // Disclaimer
+            Text("⚠️ This is an estimate based on general food data. Individual responses may vary. Consult your healthcare provider for personalized advice.")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.leading)
+                .padding(.top, 8)
         }
         .padding(20)
         .background(
@@ -466,7 +635,12 @@ struct TextPhotoEntryView: View {
             return
         }
         
-        alertMessage = "🎉 Meal saved successfully!\n\n📋 Type: \(foodEntry.mealType.rawValue)\n🍽️ Items: \(validItems.map { $0.name }.joined(separator: ", "))"
-        showingAlert = true
+        // Dismiss keyboard first to avoid RTI errors
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        
+        // Add small delay to let keyboard dismiss, then show recommendations
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.showingRecommendations = true
+        }
     }
 }
