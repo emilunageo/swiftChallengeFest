@@ -22,7 +22,7 @@ struct ContentView: View {
                 case .forum:     ChatView()
                 case .meal:      MealView()
                 case .profile:   ProfileView()
-                case .suggestions: RefriView()
+                case .suggestions: SuggestionsView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
