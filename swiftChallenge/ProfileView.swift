@@ -4,10 +4,68 @@
 //
 //  Created by Fatima Alonso on 6/7/25.
 //
-
 import SwiftUI
 import HealthKit
 import Contacts
+
+// MARK: - Medical Condition Enum
+enum MedicalCondition: String, CaseIterable {
+    case none = "None"
+    case diabetes = "Diabetes"
+    case hypertension = "Hypertension"
+    case heartDisease = "Heart Disease"
+    case asthma = "Asthma"
+    case arthritis = "Arthritis"
+    case thyroidDisorder = "Thyroid Disorder"
+    case chronicKidneyDisease = "Chronic Kidney Disease"
+    case other = "Other"
+    
+    var icon: String {
+        switch self {
+        case .none:
+            return "checkmark.circle.fill"
+        case .diabetes:
+            return "drop.fill"
+        case .hypertension:
+            return "heart.fill"
+        case .heartDisease:
+            return "heart.text.square.fill"
+        case .asthma:
+            return "lungs.fill"
+        case .arthritis:
+            return "figure.walk"
+        case .thyroidDisorder:
+            return "pills.fill"
+        case .chronicKidneyDisease:
+            return "kidneys.fill"
+        case .other:
+            return "cross.case.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .none:
+            return .green
+        case .diabetes:
+            return .red
+        case .hypertension:
+            return .orange
+        case .heartDisease:
+            return .red
+        case .asthma:
+            return .blue
+        case .arthritis:
+            return .purple
+        case .thyroidDisorder:
+            return .yellow
+        case .chronicKidneyDisease:
+            return .brown
+        case .other:
+            return .gray
+        }
+    }
+}
 
 // MARK: - Health Data Model
 struct HealthData {
@@ -20,6 +78,7 @@ struct ProfileView: View {
     @State private var firstName: String = ""
     @State private var lastName: String = ""
     @State private var healthData = HealthData()
+    @State private var selectedCondition: MedicalCondition = .none
     @State private var isLoading = false
     @State private var authorizationStatus = false
     
@@ -31,6 +90,7 @@ struct ProfileView: View {
                 VStack(spacing: 20) {
                     profileSection
                     nameFieldsSection
+                    medicalConditionSection
                     healthDataSection
                 }
                 .padding()
@@ -69,6 +129,9 @@ struct ProfileView: View {
                 .foregroundColor(lastName.isEmpty ? .secondary : .primary)
         }
     }
+    
+    // MARK: - Medical Condition Section
+
     
     // MARK: - Health Data Section
     private var healthDataSection: some View {
@@ -130,7 +193,58 @@ struct ProfileView: View {
             }
         }
     }
-    
+    private var medicalConditionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "stethoscope")
+                    .font(.title2)
+                    .foregroundColor(.blue)
+                Text("Medical Condition")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                Spacer()
+            }
+            
+            Menu {
+                ForEach(MedicalCondition.allCases, id: \.self) { condition in
+                    Button(action: {
+                        selectedCondition = condition
+                    }) {
+                        HStack {
+                            Image(systemName: condition.icon)
+                                .foregroundColor(condition.color)
+                            Text(condition.rawValue)
+                            if selectedCondition == condition {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Image(systemName: selectedCondition.icon)
+                        .font(.title3)
+                        .foregroundColor(selectedCondition.color)
+                        .frame(width: 25)
+                    
+                    Text(selectedCondition.rawValue)
+                        .font(.body)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
+            }
+        }
+    }
     // MARK: - HealthKit Functions
     private func requestHealthAccess() {
         guard HKHealthStore.isHealthDataAvailable() else { return }
