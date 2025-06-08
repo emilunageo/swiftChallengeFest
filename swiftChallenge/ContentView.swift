@@ -19,10 +19,12 @@ struct ContentView: View {
             Group {
                 switch selectedTab {
                 case .dashboard: DashboardView()
-                case .forum:     ForumView()
-                case .meal:      MealView()
-                case .profile:   ProfileView()
+                case .forum:  ChatView()
+                case .meal:   MealView()
+                case .profile: ProfileView()
                 case .suggestions: SuggestionsView()
+                
+
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
