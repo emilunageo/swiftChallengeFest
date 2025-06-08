@@ -19,7 +19,7 @@ struct ContentView: View {
             Group {
                 switch selectedTab {
                 case .dashboard: DashboardView()
-                case .forum:     ForumView()
+                case .forum:     ChatView()
                 case .meal:      MealView()
                 case .profile:   ProfileView()
                 case .suggestions: RefriView()
