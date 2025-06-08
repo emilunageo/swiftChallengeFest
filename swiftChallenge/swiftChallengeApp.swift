@@ -25,7 +25,7 @@ struct swiftChallengeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            FoodScannerView()
+            ContentView()
         }
         .modelContainer(sharedModelContainer)
     }
