@@ -1,5 +1,5 @@
 //
-//  RefriView.swift
+//  SuggestionsView.swift
 //  swiftChallenge
 //
 //  Created by Fatima Alonso on 6/7/25.
@@ -31,19 +31,19 @@ class SuggestionsViewModel: ObservableObject {
     @Published var comidasSugeridas = [Comida]()
     
     private let todasComidas: [Comida] = [
-        Comida(nombre: "Ensalada de pollo", ingredientes: [
-            Ingrediente(nombre: "Lechuga", indiceGlucemico: 10),
-            Ingrediente(nombre: "Pollo", indiceGlucemico: 0),
-            Ingrediente(nombre: "Tomate", indiceGlucemico: 30)
+        Comida(nombre: "Chicken Salad", ingredientes: [
+            Ingrediente(nombre: "Lettuce", indiceGlucemico: 10),
+            Ingrediente(nombre: "Chicken", indiceGlucemico: 0),
+            Ingrediente(nombre: "Tomato", indiceGlucemico: 30)
         ]),
-        Comida(nombre: "Batido verde", ingredientes: [
-            Ingrediente(nombre: "Espinaca", indiceGlucemico: 15),
-            Ingrediente(nombre: "Pepino", indiceGlucemico: 15),
-            Ingrediente(nombre: "Manzana", indiceGlucemico: 40)
+        Comida(nombre: "Green smoothie", ingredientes: [
+            Ingrediente(nombre: "Spinach", indiceGlucemico: 15),
+            Ingrediente(nombre: "Cucumber", indiceGlucemico: 15),
+            Ingrediente(nombre: "Apple", indiceGlucemico: 40)
         ]),
-        Comida(nombre: "Yogurt con nueces", ingredientes: [
+        Comida(nombre: "Yogurt with walnuts", ingredientes: [
             Ingrediente(nombre: "Yogurt", indiceGlucemico: 35),
-            Ingrediente(nombre: "Nueces", indiceGlucemico: 25)
+            Ingrediente(nombre: "Walnuts", indiceGlucemico: 25)
         ])
     ]
     
@@ -66,7 +66,7 @@ struct SuggestionsView: View {
         NavigationView {
             VStack {
                 HStack(spacing: 12) {
-                    TextField("Ingrediente disponible", text: $nuevoIngrediente)
+                    TextField("Available Ingredients", text: $nuevoIngrediente)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding(.horizontal)
                     
@@ -82,7 +82,7 @@ struct SuggestionsView: View {
                 }
 
                 Button(action: vm.recomendar) {
-                    Text("Recomendar")
+                    Text("Recommend")
                         .font(.headline)
                         .padding()
                         .frame(maxWidth: .infinity)
@@ -93,7 +93,7 @@ struct SuggestionsView: View {
                 .padding()
                 
                 List {
-                    Section(header: Text("Ingredientes")
+                    Section(header: Text("Ingredients")
                         .foregroundColor(.green)
                         .font(.headline)) {
                             ForEach(vm.ingredientes) { item in
@@ -102,11 +102,11 @@ struct SuggestionsView: View {
                             .onDelete(perform: eliminarIngrediente)
                         }
                     
-                    Section(header: Text("Ideas de comida")
+                    Section(header: Text("Meal ideas")
                         .foregroundColor(.green)
                         .font(.headline)) {
                             if vm.comidasSugeridas.isEmpty {
-                                Text("Añade ingredientes y pulsa 'Recomendar'")
+                                Text("Add ingredients and press 'Recommend'")
                                     .italic()
                                     .foregroundColor(.secondary)
                             } else {
@@ -115,7 +115,7 @@ struct SuggestionsView: View {
                                         Text(comida.nombre)
                                             .font(.headline)
                                             .foregroundColor(.green)
-                                        Text("IG promedio: \(Int(comida.igPromedio))")
+                                        Text("Average GI: \(Int(comida.igPromedio))")
                                             .font(.subheadline)
                                             .foregroundColor(.secondary)
                                     }
@@ -127,7 +127,7 @@ struct SuggestionsView: View {
             
             }
             .background(Color.green.opacity(0.05))
-            .navigationTitle("Qué hay para comer?")
+            .navigationTitle("What's there to eat?")
         }
     }
     
@@ -146,10 +146,10 @@ struct SuggestionsView: View {
     
     private func estimarIG(para nombre: String) -> Int {
         let mapping: [String: Int] = [
-            "lechuga": 10, "espinaca": 15, "pepino": 15, "tomate": 30,
-            "manzana verde": 40, "pan blanco": 75, "arroz blanco": 70,
-            "pasta": 55, "nueces": 25, "pechuga de pollo": 0,
-            "yogur natural": 35
+            "lettuce": 10, "spinach": 15, "cucumber": 15, "tomato": 30,
+            "apple": 40, "white bread": 75, "white rice": 70,
+            "pasta": 55, "walnuts": 25, "chicken": 0,
+            "yogurt": 35
         ]
         let clave = nombre.lowercased()
         return mapping[clave, default: 50]
