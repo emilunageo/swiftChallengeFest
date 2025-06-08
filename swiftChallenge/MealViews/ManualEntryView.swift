@@ -16,6 +16,8 @@ struct ManualEntryView: View {
     @State private var foodEntry = FoodEntry()
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @State private var isSubmitting = false
+    @StateObject private var mealService = MealService()
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -201,7 +203,7 @@ struct ManualEntryView: View {
             .opacity(foodEntry.items.allSatisfy { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } ? 0.6 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: foodEntry.items.map { $0.name })
         }
-        .disabled(foodEntry.items.allSatisfy { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })
+        .disabled(foodEntry.items.allSatisfy { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } || isSubmitting)
     }
     
     private func addFoodItem() {
@@ -209,7 +211,7 @@ struct ManualEntryView: View {
             foodEntry.items.append(FoodItem())
         }
     }
-    
+
     private func removeFoodItem(at index: Int) {
         withAnimation(.spring()) {
             foodEntry.items.remove(at: index)
@@ -218,14 +220,28 @@ struct ManualEntryView: View {
     
     private func saveFoodEntry() {
         let validItems = foodEntry.items.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-        
+
         if validItems.isEmpty {
             alertMessage = "Please add at least one food item before saving."
             showingAlert = true
             return
         }
-        
-        alertMessage = "🎉 Meal saved successfully!\n\n📋 Type: \(foodEntry.mealType.rawValue)\n🍽️ Items: \(validItems.map { $0.name }.joined(separator: ", "))"
-        showingAlert = true
+
+        isSubmitting = true
+
+        Task {
+            let success = await mealService.registerMeal(foodEntry: foodEntry)
+
+            DispatchQueue.main.async {
+                self.isSubmitting = false
+
+                if success {
+                    self.alertMessage = "🎉 Meal registered successfully!\n\nFood items have been matched against our database for accurate nutritional analysis."
+                } else {
+                    self.alertMessage = self.mealService.errorMessage ?? "Failed to register meal"
+                }
+                self.showingAlert = true
+            }
+        }
     }
 }
