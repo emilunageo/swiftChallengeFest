@@ -10,6 +10,453 @@ import Vision
 import UIKit
 import AVFoundation
 import CoreML
+import HealthKit
+
+// MARK: - HealthKit Manager for Glucose Data
+class HealthKitManager: ObservableObject {
+    private let healthStore = HKHealthStore()
+    @Published var recentGlucoseReading: Double?
+    @Published var averageGlucose: Double?
+    
+    func requestHealthKitPermissions() {
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        
+        let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose)!
+        let readTypes: Set<HKObjectType> = [glucoseType]
+        
+        healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
+            if success {
+                self.fetchRecentGlucoseData()
+            }
+        }
+    }
+    
+    private func fetchRecentGlucoseData() {
+        let glucoseType = HKQuantityType.quantityType(forIdentifier: .bloodGlucose)!
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+        let query = HKSampleQuery(sampleType: glucoseType, predicate: nil, limit: 10, sortDescriptors: [sortDescriptor]) { _, samples, _ in
+            
+            DispatchQueue.main.async {
+                if let glucoseSamples = samples as? [HKQuantitySample], !glucoseSamples.isEmpty {
+                    // Most recent reading
+                    let recentValue = glucoseSamples.first!.quantity.doubleValue(for: HKUnit(from: "mg/dL"))
+                    self.recentGlucoseReading = recentValue
+                    
+                    // Average of recent readings
+                    let values = glucoseSamples.map { $0.quantity.doubleValue(for: HKUnit(from: "mg/dL")) }
+                    self.averageGlucose = values.reduce(0, +) / Double(values.count)
+                }
+            }
+        }
+        
+        healthStore.execute(query)
+    }
+}
+
+// MARK: - Glucose Estimation Model
+struct GlucoseEstimation {
+    let estimatedIncrease: Double
+    let estimatedPeak: Double
+    let riskLevel: GlucoseRiskLevel
+    let timeToPeak: String
+    let recommendations: [String]
+}
+
+enum GlucoseRiskLevel {
+    case low, moderate, high
+    
+    var color: Color {
+        switch self {
+        case .low: return .green
+        case .moderate: return .orange
+        case .high: return .red
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .low: return "checkmark.circle.fill"
+        case .moderate: return "exclamationmark.triangle.fill"
+        case .high: return "xmark.octagon.fill"
+        }
+    }
+    
+    var title: String {
+        switch self {
+        case .low: return "Low Impact"
+        case .moderate: return "Moderate Impact"
+        case .high: return "High Impact"
+        }
+    }
+}
+
+extension GlucoseEstimation {
+    static func estimate(for foodItems: [String], baselineGlucose: Double = 100) -> GlucoseEstimation {
+        let foodText = foodItems.joined(separator: " ").lowercased()
+        
+        // Simplified carb estimation based on common foods
+        var carbEstimate = 0.0
+        var glycemicLoad = 0.0
+        
+        // High carb foods
+        if foodText.contains("rice") { carbEstimate += 45; glycemicLoad += 40 }
+        if foodText.contains("bread") { carbEstimate += 25; glycemicLoad += 15 }
+        if foodText.contains("pasta") { carbEstimate += 40; glycemicLoad += 18 }
+        if foodText.contains("potato") { carbEstimate += 35; glycemicLoad += 22 }
+        if foodText.contains("pizza") { carbEstimate += 50; glycemicLoad += 25 }
+        if foodText.contains("bagel") { carbEstimate += 55; glycemicLoad += 30 }
+        if foodText.contains("cereal") { carbEstimate += 30; glycemicLoad += 20 }
+        if foodText.contains("oats") { carbEstimate += 25; glycemicLoad += 12 }
+        if foodText.contains("banana") { carbEstimate += 25; glycemicLoad += 15 }
+        if foodText.contains("apple") { carbEstimate += 20; glycemicLoad += 8 }
+        if foodText.contains("orange") { carbEstimate += 15; glycemicLoad += 7 }
+        
+        // Processed/sugary foods
+        if foodText.contains("soda") { carbEstimate += 40; glycemicLoad += 35 }
+        if foodText.contains("candy") { carbEstimate += 30; glycemicLoad += 28 }
+        if foodText.contains("cake") { carbEstimate += 45; glycemicLoad += 32 }
+        if foodText.contains("cookie") { carbEstimate += 20; glycemicLoad += 15 }
+        
+        // Protein foods (minimal impact)
+        if foodText.contains("chicken") || foodText.contains("fish") || foodText.contains("meat") || foodText.contains("beef") {
+            carbEstimate += 0; glycemicLoad += 0
+        }
+        
+        // Calculate estimated glucose impact
+        // Rule of 500: 1g carb raises glucose by ~4-5 mg/dL for average person
+        let estimatedIncrease = carbEstimate * 2
+        let estimatedPeak = baselineGlucose + estimatedIncrease
+        
+        // Determine risk level
+        let riskLevel: GlucoseRiskLevel
+        if estimatedIncrease <= 2.5 {
+            riskLevel = .low
+        } else if estimatedIncrease <= 3 {
+            riskLevel = .moderate
+        } else {
+            riskLevel = .high
+        }
+        
+        // Time to peak (simplified)
+        let timeToPeak = carbEstimate > 30 ? "60-90 min" : "30-60 min"
+        
+        // Generate recommendations
+        var recommendations: [String] = []
+        if riskLevel == .high {
+            recommendations.append("Consider taking a walk after eating")
+            recommendations.append("Drink water to help with glucose clearance")
+        }
+        if riskLevel != .low {
+            recommendations.append("Monitor glucose levels after eating")
+        }
+        if carbEstimate > 40 {
+            recommendations.append("Consider pairing with protein or fiber")
+        }
+        
+        return GlucoseEstimation(
+            estimatedIncrease: estimatedIncrease,
+            estimatedPeak: estimatedPeak,
+            riskLevel: riskLevel,
+            timeToPeak: timeToPeak,
+            recommendations: recommendations
+        )
+    }
+}
+
+// MARK: - Eating Recommendations Model
+struct EatingRecommendation {
+    let title: String
+    let description: String
+    let icon: String
+    let color: Color
+}
+
+struct MealRecommendations {
+    let eatingOrder: [String]
+    let generalTips: [EatingRecommendation]
+    
+    static func generateRecommendations(for foodItems: [String]) -> MealRecommendations {
+        let eatingOrder = generateEatingOrder(for: foodItems)
+        let generalTips = generateGeneralTips(for: foodItems)
+        return MealRecommendations(eatingOrder: eatingOrder, generalTips: generalTips)
+    }
+    
+    private static func generateEatingOrder(for items: [String]) -> [String] {
+        var order: [String] = []
+        let itemsLower = items.map { $0.lowercased() }
+        
+        // Vegetables and fiber first
+        let vegetables = itemsLower.filter { item in
+            ["salad", "vegetables", "greens", "broccoli", "spinach", "kale", "lettuce", "cucumber", "tomato", "carrot", "pepper"].contains { item.contains($0) }
+        }
+        
+        // Proteins second
+        let proteins = itemsLower.filter { item in
+            ["chicken", "fish", "meat", "beef", "pork", "egg", "tofu", "beans", "lentils", "quinoa", "salmon", "tuna"].contains { item.contains($0) }
+        }
+        
+        // Carbs last
+        let carbs = itemsLower.filter { item in
+            ["rice", "bread", "pasta", "potato", "noodles", "toast", "bagel", "cereal", "oats"].contains { item.contains($0) }
+        }
+        
+        if !vegetables.isEmpty {
+            order.append("🥬 Start with vegetables/fiber (helps with satiety)")
+        }
+        if !proteins.isEmpty {
+            order.append("🍗 Eat your proteins (promotes fullness)")
+        }
+        if !carbs.isEmpty {
+            order.append("🍚 Finish with carbohydrates (better blood sugar control)")
+        }
+        
+        if order.isEmpty {
+            order = ["🍽️ Eat mindfully, chewing each bite thoroughly"]
+        }
+        
+        return order
+    }
+    
+    private static func generateGeneralTips(for items: [String]) -> [EatingRecommendation] {
+        var tips: [EatingRecommendation] = []
+        let itemsText = items.joined(separator: " ").lowercased()
+        
+        // Base recommendations everyone gets
+        tips.append(EatingRecommendation(
+            title: "Chew Mindfully",
+            description: "Chew each bite 20-30 times to aid digestion and increase satiety",
+            icon: "mouth",
+            color: .blue
+        ))
+        
+        tips.append(EatingRecommendation(
+            title: "Eat Slowly",
+            description: "Take 15-20 minutes to finish your meal to allow fullness signals",
+            icon: "clock",
+            color: .green
+        ))
+        
+        // Conditional recommendations based on food content
+        let hasVeggies = ["salad", "vegetables", "greens", "broccoli", "spinach", "kale"].contains { itemsText.contains($0) }
+        let hasProcessed = ["pizza", "hamburger", "fries", "chips", "soda", "candy"].contains { itemsText.contains($0) }
+        let hasCarbs = ["rice", "bread", "pasta", "potato"].contains { itemsText.contains($0) }
+        
+        if !hasVeggies {
+            tips.append(EatingRecommendation(
+                title: "Add More Greens",
+                description: "Consider adding leafy greens or vegetables to boost nutrition",
+                icon: "leaf.fill",
+                color: .green
+            ))
+        }
+        
+        if hasProcessed {
+            tips.append(EatingRecommendation(
+                title: "Balance Your Plate",
+                description: "Try to include whole foods and reduce processed items next time",
+                icon: "scale.3d",
+                color: .orange
+            ))
+        }
+        
+        if hasCarbs {
+            tips.append(EatingRecommendation(
+                title: "Portion Control",
+                description: "Keep carb portions to about 1/4 of your plate",
+                icon: "hand.raised.fill",
+                color: .purple
+            ))
+        }
+        
+        tips.append(EatingRecommendation(
+            title: "Stay Hydrated",
+            description: "Drink water before and after eating, but limit during meals",
+            icon: "drop.fill",
+            color: .cyan
+        ))
+        
+        return Array(tips.prefix(4)) // Limit to 4 tips to avoid overwhelming
+    }
+}
+
+// MARK: - Recommendations Bottom Sheet
+struct RecommendationsBottomSheet: View {
+    let recommendations: MealRecommendations
+    let mealType: String
+    let foodItems: [String]
+    @Binding var isPresented: Bool
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Header
+                        VStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.green.opacity(0.2))
+                                    .frame(width: 80, height: 80)
+                                
+                                Image(systemName: "brain.head.profile")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.green)
+                            }
+                            
+                            Text("Smart Eating Tips")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                            
+                            Text("Personalized recommendations for your \(mealType.lowercased())")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.top, 20)
+                        
+                        // Eating Order Section
+                        if !recommendations.eatingOrder.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Image(systemName: "list.number")
+                                        .foregroundColor(.blue)
+                                        .font(.title2)
+                                    
+                                    Text("Recommended Eating Order")
+                                        .font(.headline)
+                                        .fontWeight(.semibold)
+                                }
+                                
+                                VStack(spacing: 12) {
+                                    ForEach(Array(recommendations.eatingOrder.enumerated()), id: \.offset) { index, order in
+                                        HStack(spacing: 12) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(Color.blue.opacity(0.2))
+                                                    .frame(width: 32, height: 32)
+                                                
+                                                Text("\(index + 1)")
+                                                    .font(.system(size: 14, weight: .bold))
+                                                    .foregroundColor(.blue)
+                                            }
+                                            
+                                            Text(order)
+                                                .font(.system(size: 15))
+                                                .foregroundColor(.primary)
+                                            
+                                            Spacer()
+                                        }
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 16)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color(.systemBackground))
+                                        )
+                                    }
+                                }
+                            }
+                            .padding(20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color(.systemBackground))
+                                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                            )
+                        }
+                        
+                        // General Tips Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Image(systemName: "lightbulb.fill")
+                                    .foregroundColor(.orange)
+                                    .font(.title2)
+                                
+                                Text("Health Tips")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                            }
+                            
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
+                                ForEach(Array(recommendations.generalTips.enumerated()), id: \.offset) { _, tip in
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        HStack {
+                                            Image(systemName: tip.icon)
+                                                .foregroundColor(tip.color)
+                                                .font(.title3)
+                                            
+                                            Text(tip.title)
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundColor(.primary)
+                                            
+                                            Spacer()
+                                        }
+                                        
+                                        Text(tip.description)
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(3)
+                                            .multilineTextAlignment(.leading)
+                                    }
+                                    .padding(16)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(tip.color.opacity(0.1))
+                                    )
+                                }
+                            }
+                        }
+                        .padding(20)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(.systemBackground))
+                                .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        )
+                        
+                        // Action Button
+                        Button(action: {
+                            onDismiss()
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 18))
+                                
+                                Text("Got It!")
+                                    .fontWeight(.semibold)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.green, Color.blue],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .foregroundColor(.white)
+                            .cornerRadius(16)
+                            .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+                        }
+                        
+                        Spacer(minLength: 20)
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        onDismiss()
+                    }
+                }
+            }
+        }
+    }
+}
 
 // MARK: - Food Photo Entry View (CoreML)
 struct FoodPhotoEntryView: View {
@@ -22,6 +469,8 @@ struct FoodPhotoEntryView: View {
     @State private var alertMessage = ""
     @State private var predictedFood = ""
     @State private var confidence: Double = 0.0
+    @State private var showingRecommendations = false
+    @StateObject private var healthKitManager = HealthKitManager()
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -49,6 +498,11 @@ struct FoodPhotoEntryView: View {
                     // Manual adjustment if needed
                     foodItemsCard
                     
+                    // Glucose Estimation
+                    if !foodEntry.items.allSatisfy { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } {
+                        glucoseEstimationCard
+                    }
+                    
                     // Save Button
                     saveButton
                     
@@ -69,10 +523,23 @@ struct FoodPhotoEntryView: View {
         .sheet(isPresented: $showingImagePicker) {
             ImagePicker(selectedImage: $selectedImage, sourceType: .photoLibrary)
         }
+        .sheet(isPresented: $showingRecommendations) {
+            RecommendationsBottomSheet(
+                recommendations: MealRecommendations.generateRecommendations(
+                    for: foodEntry.items.compactMap { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0.name }
+                ),
+                mealType: foodEntry.mealType.rawValue,
+                foodItems: foodEntry.items.compactMap { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0.name },
+                isPresented: $showingRecommendations
+            ) {
+                showingRecommendations = false
+                dismiss()
+            }
+        }
         .alert("", isPresented: $showingAlert) {
             Button("OK") {
                 if alertMessage.contains("successfully") {
-                    dismiss()
+                    // Don't dismiss here, let the recommendations sheet handle it
                 }
             }
         } message: {
@@ -82,6 +549,9 @@ struct FoodPhotoEntryView: View {
             if let image = image {
                 predictFood(from: image)
             }
+        }
+        .onAppear {
+            healthKitManager.requestHealthKitPermissions()
         }
     }
     
@@ -295,7 +765,7 @@ struct FoodPhotoEntryView: View {
                                 .fill(
                                     foodEntry.mealType == meal ?
                                     LinearGradient(colors: [meal.color, meal.color.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing) :
-                                    LinearGradient(colors: [Color.cardBackground, Color.cardBackground], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        LinearGradient(colors: [Color.cardBackground, Color.cardBackground], startPoint: .topLeading, endPoint: .bottomTrailing)
                                 )
                                 .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                         )
@@ -311,6 +781,7 @@ struct FoodPhotoEntryView: View {
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
         )
     }
+    
     
     private var foodItemsCard: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -360,6 +831,10 @@ struct FoodPhotoEntryView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.lightGray.opacity(0.5))
                         )
+                        .onSubmit {
+                            // Dismiss keyboard when user taps return
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        }
                         
                         if foodEntry.items.count > 1 {
                             Button(action: { removeFoodItem(at: index) }) {
@@ -459,7 +934,7 @@ struct FoodPhotoEntryView: View {
     
     private func pixelBuffer(from image: UIImage, size: CGSize) -> CVPixelBuffer? {
         let attrs = [kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue,
-                     kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue] as CFDictionary
+             kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue] as CFDictionary
         
         var pixelBuffer: CVPixelBuffer?
         let status = CVPixelBufferCreate(kCFAllocatorDefault,
@@ -496,6 +971,147 @@ struct FoodPhotoEntryView: View {
         
         return buffer
     }
+    private var glucoseEstimationCard: some View {
+        let foodNames = foodEntry.items.compactMap {
+            $0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0.name
+        }
+        let baselineGlucose = healthKitManager.recentGlucoseReading ?? 100.0
+        let estimation = GlucoseEstimation.estimate(for: foodNames, baselineGlucose: baselineGlucose)
+        
+        return VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Image(systemName: "waveform.path.ecg")
+                    .foregroundColor(.red)
+                    .font(.title2)
+                
+                Text("Glucose Impact")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                // HealthKit indicator
+                if let recentReading = healthKitManager.recentGlucoseReading {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("Current")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text("\(Int(recentReading)) mg/dL")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+            
+            // Risk Level Indicator
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(estimation.riskLevel.color.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: estimation.riskLevel.icon)
+                        .foregroundColor(estimation.riskLevel.color)
+                        .font(.title3)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(estimation.riskLevel.title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(estimation.riskLevel.color)
+                    
+                    Text("Estimated peak: \(Int(estimation.estimatedPeak)) mg/dL")
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                    
+                    Text("Time to peak: \(estimation.timeToPeak)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(estimation.riskLevel.color.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(estimation.riskLevel.color.opacity(0.3), lineWidth: 1)
+                    )
+            )
+            
+            // Detailed Information
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Expected increase:")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("+\(Int(estimation.estimatedIncrease)) mg/dL")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+                
+                if let avgGlucose = healthKitManager.averageGlucose {
+                    HStack {
+                        Text("Recent average:")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("\(Int(avgGlucose)) mg/dL")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+            
+            // Recommendations
+            if !estimation.recommendations.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Recommendations:")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    ForEach(Array(estimation.recommendations.enumerated()), id: \.offset) { index, recommendation in
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.appleGreen)
+                                .font(.system(size: 12))
+                                .padding(.top, 2)
+                            
+                            Text(recommendation)
+                                .font(.system(size: 13))
+                                .foregroundColor(.primary)
+                                .multilineTextAlignment(.leading)
+                        }
+                    }
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.appleGreen.opacity(0.1))
+                )
+            }
+            
+            // Disclaimer
+            Text("⚠️ This is an estimate based on general food data. Individual responses may vary. Consult your healthcare provider for personalized advice.")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.leading)
+                .padding(.top, 8)
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.cardBackground)
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+        )
+    }
     
     private func saveFoodEntry() {
         let validItems = foodEntry.items.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -506,7 +1122,12 @@ struct FoodPhotoEntryView: View {
             return
         }
         
-        alertMessage = "🎉 Meal saved successfully!\n\n📋 Type: \(foodEntry.mealType.rawValue)\n🍽️ Items: \(validItems.map { $0.name }.joined(separator: ", "))"
-        showingAlert = true
+        // Dismiss keyboard first to avoid RTI errors
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        
+        // Add small delay to let keyboard dismiss, then show recommendations
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.showingRecommendations = true
+        }
     }
 }
