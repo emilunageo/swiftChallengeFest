@@ -16,6 +16,7 @@ extension Color {
     static let appleGreen = Color(red: 0.2, green: 0.8, blue: 0.2)
     static let lightGray = Color(red: 0.97, green: 0.97, blue: 0.97)
     static let cardBackground = Color.white
+    static let warmRed = Color(red: 221/255, green: 104/255, blue: 90/255)
 }
 
 // MARK: - Main Navigation View
