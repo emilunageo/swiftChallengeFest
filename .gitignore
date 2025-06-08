@@ -5,7 +5,7 @@ xcuserdata/
 *.xcuserstate
 *.xcscmblueprint
 *.xccheckout
-
+swiftChallenge.xcodeproj/project.pbxproj
 ## Build generated
 build/
 DerivedData/
